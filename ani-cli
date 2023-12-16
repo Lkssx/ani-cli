@@ -100,7 +100,7 @@ update_script() {
 # checks if dependencies are present
 dep_ch() {
     for dep; do
-        command -v "$dep" >/dev/null || die "Program \"$dep\" not found. Please install it."
+        command -v "$dep" >/dev/null || die "El programa \"$dep\" no se encuentró. [Por favor instalalo]."
     done
 }
 
@@ -341,12 +341,12 @@ while [ $# -gt 0 ]; do
             esac
             ;;
         -q | --quality)
-            [ $# -lt 2 ] && die "missing argument!"
+            [ $# -lt 2 ] && die "Comando no valido!"
             quality="$2"
             shift
             ;;
         -S | --select-nth)
-            [ $# -lt 2 ] && die "missing argument!"
+            [ $# -lt 2 ] && die "Comando no valido!"
             index="$2"
             shift
             ;;
@@ -359,7 +359,7 @@ while [ $# -gt 0 ]; do
         -V | --version) version_info ;;
         -h | --help) help_info ;;
         -e | --episode | -r | --range)
-            [ $# -lt 2 ] && die "missing argument!"
+            [ $# -lt 2 ] && die "Comando no valido!"
             ep_no="$2"
             [ -n "$index" ] && ANI_CLI_NON_INTERACTIVE=1 #Checks for -S presence
             shift
@@ -374,7 +374,7 @@ while [ $# -gt 0 ]; do
 done
 [ "$use_external_menu" = "0" ] && multi_selection_flag="${ANI_CLI_MULTI_SELECTION:-"-m"}"
 [ "$use_external_menu" = "1" ] && multi_selection_flag="${ANI_CLI_MULTI_SELECTION:-"-multi-select"}"
-printf "\33[2K\r\033[1;34mChecking dependencies...\033\n[0m"
+printf "\33[2K\r\033[1;34mVerificando dependencias...\033\n[0m"
 dep_ch "curl" "sed" "grep" || true
 [ "$skip_intro" = 1 ] && (dep_ch "ani-skip" || true)
 if [ -z "$ANI_CLI_NON_INTERACTIVE" ]; then dep_ch fzf || true; fi
@@ -383,10 +383,10 @@ case "$player_function" in
     download) dep_ch "ffmpeg" "aria2c" ;;
     flatpak*)
         dep_ch "flatpak"
-        flatpak info io.mpv.Mpv >/dev/null 2>&1 || die "Program \"mpv (flatpak)\" not found. Please install it."
+        flatpak info io.mpv.Mpv >/dev/null 2>&1 || die "El programa \"mpv (flatpak)\" no se encontró. Por favor instalalo."
         ;;
-    android*) printf "\33[2K\rChecking of players on Android is disabled\n" ;;
-    *iSH*) printf "\33[2K\rChecking of players on iOS is disabled\n" ;;
+    android*) printf "\33[2K\rLa verificación de jugadores en Android está deshabilitada\n" ;;
+    *iSH*) printf "\33[2K\rLa verificación de reproductores en iOS está deshabilitada\n" ;;
     *) dep_ch "$player_function" ;;
 esac
 
@@ -395,8 +395,8 @@ case "$search" in
     history)
         anime_list=$(while read -r ep_no id title; do process_hist_entry & done <"$histfile")
         wait
-        [ -z "$anime_list" ] && die "No unwatched series in history!"
-        result=$(printf "%s" "$anime_list" | nl -w 2 | sed 's/^[[:space:]]//' | nth "Select anime: " | cut -f1)
+        [ -z "$anime_list" ] && die "No hay series sin ver en el historial!"
+        result=$(printf "%s" "$anime_list" | nl -w 2 | sed 's/^[[:space:]]//' | nth "Elige un anime: " | cut -f1)
         [ -z "$result" ] && exit 1
         resfile="$(mktemp)"
         grep "$result" "$histfile" >"$resfile"
@@ -408,23 +408,23 @@ case "$search" in
     *)
         if [ "$use_external_menu" = "0" ]; then
             while [ -z "$query" ]; do
-                printf "\33[2K\r\033[1;36mSearch anime: \033[0m" && read -r query
+                printf "\33[2K\r\033[1;36mElige un anime: : \033[0m" && read -r query
             done
         else
-            [ -z "$query" ] && query=$(printf "" | external_menu "" "Search anime: ")
+            [ -z "$query" ] && query=$(printf "" | external_menu "" "Elige un opción: ")
             [ -z "$query" ] && exit 1
         fi
         query=$(printf "%s" "$query" | sed "s| |+|g")
         anime_list=$(search_anime "$query")
-        [ -z "$anime_list" ] && die "No results found!"
+        [ -z "$anime_list" ] && die "No se encontraron coincidencias!"
         [ "$index" -eq "$index" ] 2>/dev/null && result=$(printf "%s" "$anime_list" | sed -n "${index}p")
-        [ -z "$index" ] && result=$(printf "%s" "$anime_list" | nl -w 2 | sed 's/^[[:space:]]//' | nth "Select anime: ")
+        [ -z "$index" ] && result=$(printf "%s" "$anime_list" | nl -w 2 | sed 's/^[[:space:]]//' | nth "Elige un episodio: ")
         [ -z "$result" ] && exit 1
         title=$(printf "%s" "$result" | cut -f2)
         allanime_title="$(printf "%s" "$title" | cut -d'(' -f1 | tr -d '[:punct:]')"
         id=$(printf "%s" "$result" | cut -f1)
         ep_list=$(episodes_list "$id")
-        [ -z "$ep_no" ] && ep_no=$(printf "%s" "$ep_list" | nth "Select episode: " "$multi_selection_flag")
+        [ -z "$ep_no" ] && ep_no=$(printf "%s" "$ep_list" | nth "Elige un episodio: " "$multi_selection_flag")
         [ -z "$ep_no" ] && exit 1
         ;;
 esac
@@ -438,12 +438,12 @@ tput sc
 play
 [ "$player_function" = "download" ] || [ "$player_function" = "debug" ] && exit 0
 
-while cmd=$(printf "next\nreplay\nprevious\nselect\nchange_quality\nquit" | nth "Playing episode $ep_no of $title... "); do
+while cmd=$(printf "next\nreplay\nprevious\nselect\nchange_quality\nquit" | nth "Reproduciendo $ep_no of $title... "); do
     case "$cmd" in
         next) ep_no=$(printf "%s" "$ep_list" | sed -n "/^${ep_no}$/{n;p;}") 2>/dev/null ;;
         replay) episode="$replay" ;;
         previous) ep_no=$(printf "%s" "$ep_list" | sed -n "/^${ep_no}$/{g;1!p;};h") 2>/dev/null ;;
-        select) ep_no=$(printf "%s" "$ep_list" | nth "Select episode: " "$multi_selection_flag") ;;
+        select) ep_no=$(printf "%s" "$ep_list" | nth "Elige un episodio: " "$multi_selection_flag") ;;
         change_quality)
             episode=$(printf "%s" "$links" | launcher)
             quality=$(printf "%s" "$episode" | grep -oE "^[0-9]+")
@@ -451,7 +451,7 @@ while cmd=$(printf "next\nreplay\nprevious\nselect\nchange_quality\nquit" | nth 
             ;;
         *) exit 0 ;;
     esac
-    [ -z "$ep_no" ] && die "Out of range"
+    [ -z "$ep_no" ] && die "Fuera de rango"
     play
 done
 
